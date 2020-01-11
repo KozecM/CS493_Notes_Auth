@@ -13,10 +13,10 @@ const configOptions = {
   authDomain: "fir-cookbook-e01da.firebaseapp.com",
   databaseURL: "https://fir-cookbook-e01da.firebaseio.com",
   projectId: "fir-cookbook-e01da",
-  storageBucket: "fir-cookbook-e01da.appspot.com",
-  messagingSenderId: "968230329173",
-  appId: "1:968230329173:web:e1258ba4fa8b16a56f6ddc",
-  measurementId: "G-TQN4089ZF3"
+  storageBucket: process.env.VUE_APP_FIREBASE_BUCKET,
+  messagingSenderId: process.env.VUE_APP_FIREBASE_SENDER_ID,
+  appId: process.env.VUE_APP_FIREBASE_APP_ID,
+  measurementId: process.env.VUE_APP_FIREBASE_MESURE_ID
 };
 
 firebase.initializeApp(configOptions);
