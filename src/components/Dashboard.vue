@@ -6,6 +6,9 @@
     <div class="signOut">
       <button id="signout" v-on:click="signOut">Sign Out</button>
     </div>
+    <div class="notes">
+      <button id="note" v-on:click="notes">Notes</button>
+    </div>
   </div>
 </template>
 
@@ -16,7 +19,8 @@
   export default {
     data() {
       return{
-        email: ''
+        email: '',
+        uid: ''
       };
     },
 
@@ -26,13 +30,19 @@
         .then(() => {
           this.$router.push('/');
         });
+      },
+      notes: function () {
+        this.$router.push('/notes/' + this.uid)
       }  
     },
 
     mounted: function () {
       firebase.auth().onAuthStateChanged((user) => {
         if(user){
-           this.email = user.email;
+          this.uid = user.uid;
+          this.email = user.email;
+        }else{
+          this.$router.push('/');
         }
       })
     }

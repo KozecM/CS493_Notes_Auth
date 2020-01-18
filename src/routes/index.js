@@ -1,7 +1,9 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import HelloWorld from '../components/HelloWorld.vue'
+import Login from '../components/Login.vue'
 import Dashboard from '../components/Dashboard.vue'
+import Notes from '../components/Notes.vue'
+import ViewNote from '../components/ViewNote.vue'
 
 Vue.use(Router)
 
@@ -12,12 +14,22 @@ const router = new Router({
         {
         path: '/',
         name: 'login',
-        component: HelloWorld
+        component: Login
     },
     {
         path: '/dashboard',
         name: 'Dashboard',
         component: Dashboard
+    },
+    {
+        path: '/notes/:uid',
+        name: 'Notes',
+        component: Notes
+    },
+    {
+        path: '/notes/:uid/viewnote/:id',
+        name: 'viewNote',
+        component: ViewNote,
     }
 ]
 });
