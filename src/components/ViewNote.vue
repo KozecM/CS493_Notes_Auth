@@ -25,14 +25,15 @@
     </div>
     <br />
     <div class="add_pic">
-      <input type="file" multiple @change="onFileChosen">
+      <input type="file" multiple @change="onFileChosen" ref="file" class="inputfile"> 
+      <button @click="$refs.file.click()" >Choose Files</button>
     </div>
     <div v-if="imagesData!= null">
       <button id="upload" v-on:click="onUpload">Upload</button>
     </div>
     <ul :style="gridStyle" class="image-list">
-      <li v-for="(picture, index) in pictures" v-bind:key="index" class="image-item">
-        <img class="image" :src="picture">
+      <li v-for="(picture) in pictures" v-bind:key="picture.id" class="image-item">
+        <img class="image" :src="picture.data().url">
       </li>
     </ul>
   </div>
@@ -54,7 +55,8 @@ export default {
       pictures: [],
       uploadValue: 0,
       numberOCols: 2,
-      editVal: false
+      editVal: false,
+      images:null
     }  
   },
   computed: {
@@ -67,11 +69,9 @@ export default {
   methods: {
     onFileChosen(event) {
       this.uploadValue=0;
-      this.pictures =[];
       this.imagesData = event.target.files;
     },
     onUpload() {
-      this.pictures=[];
 
       this.imagesData.forEach(image => {
         var storRef = firebase.storage().ref('images/'+ this.uid + '/' + this.id + `/${image.name}`);
@@ -90,8 +90,13 @@ export default {
           },
           ()=>{this.uploadValue =100;
             task.snapshot.ref.getDownloadURL().then((url) => {
-              this.pictures.push(url);
-              console.log(this.pictures);
+              db.collection('users').doc(this.uid)
+                .collection('notes').doc(this.id)
+                .collection('imageUrls').add({
+                url: url
+              }).then(snapshot => {
+                this.pictures.push(snapshot);
+              }); 
             })
 
           }
@@ -117,36 +122,36 @@ export default {
     }
   },
   mounted: function () {
-     firebase.auth().onAuthStateChanged((user) => {
-      if(user){
-        db.collection('users').doc(user.uid).collection('notes').doc(this.$route.params.id).get()
-        .then(snapshot => {
-          this.uid = user.uid;
-          this.id = snapshot.id;
-          this.title = snapshot.data().title;
-          this.description = snapshot.data().description;
-        });
-        
-      }
-     });
+    firebase.auth().onAuthStateChanged((user) => {
+     if(user){
 
-     firebase.storage().ref('images/' + this.uid + '/' + this.id)
+       db.collection('users').doc(user.uid).collection('notes').doc(this.$route.params.id).get()
+       .then(snapshot => {
+         this.uid = user.uid;
+         this.id = snapshot.id;
+         this.title = snapshot.data().title;
+         this.description = snapshot.data().description;
+       });
+
+       db.collection('users').doc(user.uid)
+        .collection('notes').doc(this.$route.params.id)
+        .collection('imageUrls').get()
+        .then(snapshot => {
+          snapshot.docs.forEach(element => {
+            console.log("element" + element.data().url);
+            this.pictures.push(element);
+          });
+        });
+       
+     }
+    });
+    
   }
 }
 /*eslint-enable*/
 </script>
 
 <style scoped>
-  button {
-    border: 4px solid gray;
-    padding: 6px 19px;
-    margin:0 5px 5px 0;
-    border-radius: 10px;
-    color:black;
-    text-align: center;
-    font-size: 20pt;
-    background-color: slategray
-  }
   .image-list {
     display: grid;
     grid-gap: 1em;
@@ -157,5 +162,14 @@ export default {
   img {
     max-width: 400px;
     max-height: 200px
+  }
+
+  .inputfile{
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    
   }
 </style>

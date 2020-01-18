@@ -91,38 +91,10 @@ export default {
 
 <style scoped>
 
+  ul {
+    padding-inline-start: 0px;
+  }
   li {
     display: block;
-  }
-
-  #info {
-    border: 4px solid gray;
-    padding: 6px 19px;
-    margin:0 5px 5px 0;
-    border-radius: 10px;
-    color:black;
-    text-align: center;
-    font-size: 20pt;
-    background-color: slategray
-  }
-
-  #inputs {
-    position: relative;;
-    left: 50%;
-    -webkit-transform: translate(-50%, 0);
-    border: 4px solid gray;
-    padding: 10px;
-    width:fit-content;
-  }
-
-  #add {
-    border: 3px solid gray;
-    padding: 6px 19px;
-    margin:0 5px 5px 0;
-    border-radius: 10px;
-    color:black;
-    text-align: center;
-    font-size: 10pt;
-    background-color: slategray
   }
 </style>
