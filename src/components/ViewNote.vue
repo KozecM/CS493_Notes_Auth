@@ -3,6 +3,7 @@
     <div class="back">
       <button id="back" v-on:click="back">Back to Notes</button>
     </div>
+    <br />
     <div v-if="!editVal">
       <div class="edit_delete">
         <button id="edit" v-on:click="change">Edit</button>
@@ -22,6 +23,14 @@
       <input type="text" v-model="description">
       <button id="save" v-on:click="save">Save</button>
     </div>
+    <br />
+    <div class="add_pic">
+      <input type="file" multiple @change="onFileChosen">
+    </div>
+    <div v-if="imagesData!= null">
+      <button id="upload" v-on:click="onUpload">Upload</button>
+    </div>
+    <div v-for=""
   </div>
 </template>
 
@@ -37,11 +46,36 @@ export default {
       id: '',
       title: '',
       description: '',
+      imagesData: null,
+      pictures: null,
+      uploadValue: 0,
       editVal: false
     }  
   },
 
   methods: {
+    onFileChosen(event) {
+      this.uploadValue=0;
+      this.pictures =null;
+      this.imagesData = event.target.files;
+    },
+    onUpload() {
+      this.pictures=null;
+
+      this.imagesData.forEach(image => {
+        const ref = firebase.storage().ref('images/'+ this.uid + '/' + this.id + `/${image.name}`).put(image);
+        ref.on(`state_changed`, snapshot => {
+          this.uploadValue= (snapshot.bytesTransferred/snapshot.totalBytes)*100;
+        },
+        ()=>{this.uploadValue=100;
+          ref.snapshot.ref.getDownloadURL().then((url) => {
+            this.pictures.push = url;
+          });
+        });
+      });
+
+      this.imagesData = null;
+    },
     remove: function() {
       db.collection('users').doc(this.uid).collection('notes').doc(this.id).delete() ;
       this.$router.push({name: "Notes"});
