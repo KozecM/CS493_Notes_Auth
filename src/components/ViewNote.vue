@@ -30,7 +30,11 @@
     <div v-if="imagesData!= null">
       <button id="upload" v-on:click="onUpload">Upload</button>
     </div>
-    <div v-for=""
+    <ul :style="gridStyle" class="image-list">
+      <li v-for="(picture, index) in pictures" v-bind:key="index" class="image-item">
+        <img class="image" :src="picture">
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -47,33 +51,52 @@ export default {
       title: '',
       description: '',
       imagesData: null,
-      pictures: null,
+      pictures: [],
       uploadValue: 0,
+      numberOCols: 2,
       editVal: false
     }  
   },
-
+  computed: {
+    gridStyle() {
+      return {
+        gridTemplateColumns: `repeat(${this.numberOCols}, minmax(200px, 1fr))`
+      }
+    },
+  },
   methods: {
     onFileChosen(event) {
       this.uploadValue=0;
-      this.pictures =null;
+      this.pictures =[];
       this.imagesData = event.target.files;
     },
     onUpload() {
-      this.pictures=null;
+      this.pictures=[];
 
       this.imagesData.forEach(image => {
-        const ref = firebase.storage().ref('images/'+ this.uid + '/' + this.id + `/${image.name}`).put(image);
-        ref.on(`state_changed`, snapshot => {
-          this.uploadValue= (snapshot.bytesTransferred/snapshot.totalBytes)*100;
-        },
-        ()=>{this.uploadValue=100;
-          ref.snapshot.ref.getDownloadURL().then((url) => {
-            this.pictures.push = url;
-          });
-        });
-      });
+        var storRef = firebase.storage().ref('images/'+ this.uid + '/' + this.id + `/${image.name}`);
 
+        var task = storRef.put(image);
+        console.log("url" + task.snapshot.downloadURL);
+
+        task.on('state_changed',
+          snapshot => {
+
+            var percent = (snapshot.bytesTransferred / snapshot.totalBytes)*100;
+            this.uploadValue = percent;
+          },
+          function error(err) {
+            console.log(err);
+          },
+          ()=>{this.uploadValue =100;
+            task.snapshot.ref.getDownloadURL().then((url) => {
+              this.pictures.push(url);
+              console.log(this.pictures);
+            })
+
+          }
+        ); 
+      });
       this.imagesData = null;
     },
     remove: function() {
@@ -106,6 +129,8 @@ export default {
         
       }
      });
+
+     firebase.storage().ref('images/' + this.uid + '/' + this.id)
   }
 }
 /*eslint-enable*/
@@ -121,5 +146,16 @@ export default {
     text-align: center;
     font-size: 20pt;
     background-color: slategray
+  }
+  .image-list {
+    display: grid;
+    grid-gap: 1em;
+  }
+  .image-item {
+    padding: 20px;
+  }
+  img {
+    max-width: 400px;
+    max-height: 200px
   }
 </style>
