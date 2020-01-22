@@ -31,6 +31,10 @@
     <div v-if="imagesData!= null">
       <button id="upload" v-on:click="onUpload">Upload</button>
     </div>
+    <div v-if="uploadValue != 100 && uploadValue > 0">
+      <p> Uploading: {{uploadValue.toFixed() + "%"}}
+      <progress id="progress" :value="uploadValue" max="100"></progress> </p>
+    </div>
     <ul :style="gridStyle" class="image-list">
       <li v-for="(picture) in pictures" v-bind:key="picture.id" class="image-item">
         <img class="image" :src="picture.data().url">
@@ -48,7 +52,8 @@ export default {
   data () {
     return{
       uid: '',
-      id: '',
+      categoryId: '',
+      noteId: '',
       title: '',
       description: '',
       imagesData: null,
@@ -74,7 +79,7 @@ export default {
     onUpload() {
 
       this.imagesData.forEach(image => {
-        var storRef = firebase.storage().ref('images/'+ this.uid + '/' + this.id + `/${image.name}`);
+        var storRef = firebase.storage().ref('images/'+ this.uid + '/' + this.noteId + `/${image.name}`);
 
         var task = storRef.put(image);
         console.log("url" + task.snapshot.downloadURL);
@@ -91,13 +96,12 @@ export default {
           ()=>{this.uploadValue =100;
             task.snapshot.ref.getDownloadURL().then((url) => {
               db.collection('users').doc(this.uid)
-                .collection('notes').doc(this.id)
+                .collection('categories').doc(this.categoryId)
+                .collection('notes').doc(this.noteId)
                 .collection('imageUrls').add({
                 url: url
-              }).then(snapshot => {
-                this.pictures.push(snapshot);
               }); 
-            })
+            });
 
           }
         ); 
@@ -112,7 +116,9 @@ export default {
       this.editVal = true;
     },
     save: function() {
-      db.collection('users').doc(this.uid).collection('notes').doc(this.id).set({
+      db.collection('users').doc(this.uid)
+        .collection('categories').doc(categoryId)
+        .collection('notes').doc(this.id).set({
         title: this.title, 
         description: this.description})
       .then((this.editVal = false))
@@ -123,27 +129,30 @@ export default {
   },
   mounted: function () {
     firebase.auth().onAuthStateChanged((user) => {
-     if(user){
+      if(user){
 
-       db.collection('users').doc(user.uid).collection('notes').doc(this.$route.params.id).get()
-       .then(snapshot => {
-         this.uid = user.uid;
-         this.id = snapshot.id;
-         this.title = snapshot.data().title;
-         this.description = snapshot.data().description;
-       });
-
-       db.collection('users').doc(user.uid)
-        .collection('notes').doc(this.$route.params.id)
-        .collection('imageUrls').get()
-        .then(snapshot => {
-          snapshot.docs.forEach(element => {
-            console.log("element" + element.data().url);
-            this.pictures.push(element);
+        db.collection('users').doc(user.uid)
+          .collection('categories').doc(this.$route.params.catid)
+          .collection('notes').doc(this.$route.params.noteid).get()
+          .then(snapshot => {
+            this.categoryId = this.$route.params.catid;
+            this.uid = user.uid;
+            this.noteId = snapshot.id;
+            this.title = snapshot.data().title;
+            this.description = snapshot.data().description;
           });
-        });
-       
-     }
+
+        db.collection('users').doc(user.uid)
+          .collection('categories').doc(this.$route.params.catid)
+          .collection('notes').doc(this.$route.params.noteid)
+          .collection('imageUrls').onSnapshot(snapshot => {
+            this.pictures = [];
+            snapshot.docs.forEach(element => {
+              console.log("element" + element.data().url);
+              this.pictures.push(element);
+          });
+        });      
+      }
     });
     
   }

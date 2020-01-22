@@ -1,22 +1,36 @@
 <template>
   <div class="notes_view">
-    <div class="titles">
+    <div class="categories">
+      <h3> Categories </h3>        
       <ul>
-        <li v-for="(noteInfo) in notes"
-        v-bind:key="noteInfo.id">
-          <button id="info" v-on:click="info(noteInfo)">{{noteInfo.data().title}}</button>
+        <li v-for="(category) in categories"
+        v-bind:key="category.id">
+          <button id="category" v-on:click="choose(category.id)">{{category.data().title}}</button>
+          <div class = "category_notes" v-if="currentCat == category.id">
+            <h4> Notes </h4>
+            <ul class="notes">
+              <li v-for="(note) in notes"
+              v-bind:key="note.id">
+                <button id="note" v-on:click=" info(category.id, note.id)">{{note.data().title}}</button>
+              </li>
+            </ul>
+            <div class="noteInputs" id="noteInputs">
+              <input id="noteTitle" v-model="noteTitle" placeholder="Title">
+              <input id="description" v-model="description" placeholder="Description">
+            </div>
+            <div class="add_note">
+              <button id="note" v-on:click="addNote(category.id)">Add Note</button>
+            </div>
+          </div>
           <br/>
         </li>
-        
       </ul>
     </div>
-    <div class="inputs" id="inputs">
-        <input id="title" v-model="title" placeholder="Title">
-        <input id="description" v-model="description" placeholder="Description">
-    </div>
     <br />
-    <div class="add_button">
-      <button id="add" v-on:click="add">Add Note</button>
+    <input id="categoryTitle" v-model="categoryTitle" placeholder="Category">
+    <br />
+    <div class="add_category">
+      <button id="addCategory" v-on:click="addCategory()">Add Category</button>
     </div>
     <div class= "back">
       <button id="back" v-on:click="back">Back</button>
@@ -33,10 +47,13 @@ export default {
   
   data() {
     return{
-      title: "",
+      categoryTitle: "",
+      noteTitle: "",
       description: "",
+      categories: [],
       notes: [],
       uid: '',
+      currentCat: '',
     };
   },
 
@@ -45,22 +62,42 @@ export default {
   // },
 
   methods: {
-    add: function() {
-
-      var note = {
-        
-      }
+    addCategory: function() {
       
-      db.collection('users').doc(this.uid).collection('notes').add({
-        title: this.title,
-        description: this.description
+      db.collection('users').doc(this.uid)
+        .collection('categories').add({
+        title: this.categoryTitle
       })
-      this.title = "";
-      this.description = "";
+      this.categoryTitle = "";
      
     },
-    info(info) {
-      this.$router.push({path: '/notes/'+ this.uid + '/viewnote/' + info.id})
+    addNote(catId){
+      
+      db.collection('users').doc(this.uid)
+        .collection('categories').doc(catId)
+        .collection('notes').add({
+          title: this.noteTitle,
+          description: this.description
+        })
+        this.noteTitle = ""
+        this.description = ""
+    },
+    choose(catId){
+      this.currentCat = catId;
+      this.getNotes(catId);
+    },
+    getNotes(catId){
+      db.collection('users').doc(this.uid)
+        .collection('categories').doc(catId)
+        .collection('notes').onSnapshot( snapshot => {
+          this.notes = [];
+          snapshot.docs.forEach(element => {
+            this.notes.push(element);
+          });
+        });
+    },
+    info(catId, noteId) {
+      this.$router.push({path: '/notes/'+ this.uid + '/viewnote/' + catId + "/" + noteId})
     },
     back: function() {
       this.$router.push({name: 'Dashboard'})
@@ -72,10 +109,10 @@ export default {
       if(user){
         this.uid = user.uid;
 
-        db.collection('users').doc(user.uid).collection('notes').onSnapshot( snapshot => {
-          this.notes = [];
+        db.collection('users').doc(user.uid).collection('categories').onSnapshot( snapshot => {
+          this.categories = [];
            snapshot.docs.forEach(element => { 
-            this.notes.push(element);
+            this.categories.push(element);
            });
         });
 
@@ -91,10 +128,42 @@ export default {
 
 <style scoped>
 
+  .category_notes {
+    margin: auto;
+    top: 50%;
+    left: 50%;
+    padding: .5cm;
+    border-radius: 25px;
+    background-color: darkolivegreen; 
+  }
+
+  #note {
+  display: inline-block;
+  border: 3px solid lightgreen;
+  padding: 6px 19px;
+  margin:0 5px 5px 0;
+  border-radius: 2px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color:black;
+  text-align: center;
+  background-color: transparent;
+  transition: all 0.3s;
+}
+
+#note:hover{
+  color: darkgreen;
+  background-color: lightgreen;
+}
+
   ul {
     padding-inline-start: 0px;
   }
   li {
     display: block;
+  }
+
+  h4 {
+    color: black;
   }
 </style>

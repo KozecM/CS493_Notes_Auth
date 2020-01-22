@@ -27,7 +27,7 @@ const router = new Router({
         component: Notes
     },
     {
-        path: '/notes/:uid/viewnote/:id',
+        path: '/notes/:uid/viewnote/:catid/:noteid',
         name: 'viewNote',
         component: ViewNote,
     }
